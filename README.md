@@ -29,7 +29,7 @@ directory that matches the actual ceremonies, attire, and rituals of that weddin
 | Phase | Focus | Duration |
 |---|---|---|
 | **0** | Foundations & research — map each tradition's real events/attire/shopping list, competitive scan, wireframes, lock data model & stack | ~2–3 weeks |
-| **1** | MVP — planning & checklist tool (onboarding, tradition-aware checklist, shopping list, budget, guest list, share/co-edit). No vendors yet. | ~6–8 weeks |
+| **1** | ✅ MVP — planning & checklist tool (onboarding, tradition-aware checklist, shopping list, budget, guest list, share/co-edit). No vendors yet. | ~6–8 weeks |
 | **2** | Content depth — more tradition/sub-tradition variants, richer reference content, reminders, SEO guide pages | ~4–6 weeks |
 | **3** | Vendor directory & marketplace — curated seed listings first, then self-onboarding, reviews, admin moderation | ~6–10 weeks |
 | **4** | Monetization & growth — pick a model once usage data exists, mobile app (React Native/Expo), optional AI-assisted planning | ongoing |
@@ -43,7 +43,7 @@ directory that matches the actual ceremonies, attire, and rituals of that weddin
 - Wireframe the core loop: onboarding → dashboard → checklist → shopping list.
 - Lock the data model and stack (below) before writing more code.
 
-### Phase 1 — MVP: planning & checklist tool
+### Phase 1 — MVP: planning & checklist tool ✅ done
 
 No vendors yet — pure utility, good enough that someone would use it for their own
 wedding.
@@ -51,9 +51,11 @@ wedding.
 - Onboarding: pick tradition(s), wedding date, region, rough budget.
 - Checklist & timeline generated from the tradition template, fully editable.
 - Shopping list per ceremony, seeded from the template, editable per couple.
-- Budget tracker (allocate vs. spend by category).
-- Basic guest list.
-- Share/co-edit with a partner or family coordinator.
+- Budget tracker: per-category allocated vs. spent, rolling up against the wedding's
+  total budget, with an over-budget indicator per category.
+- Guest list: add/remove guests with a side (Bride/Groom/Both), toggle invited.
+- Share/co-edit: a copyable invite link (`/join?wedding=<id>`) lets a partner or family
+  coordinator self-add as a collaborator once signed in.
 
 **Content scope for v1**: going deep on **Hindu + Christian** first rather than shallow
 across every tradition (see [Risks](#risks--open-questions)). The onboarding UI still

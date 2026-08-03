@@ -1,5 +1,8 @@
 # Project M — One planner, every wedding tradition
 
+**Live:** [project-m-ochre.vercel.app](https://project-m-ochre.vercel.app) — deployed on Vercel,
+auto-deploys on push to `main`.
+
 A web app where a couple picks their tradition — Hindu, Christian, Muslim, Sikh, Buddhist,
 interfaith, or civil — and gets a checklist, shopping list, and (later) vendor directory
 built for *that* ceremony, not a generic Western wedding template with a few extra rows
@@ -156,3 +159,14 @@ Schema changes go in `supabase/migrations/`, applied with:
 supabase link --project-ref kevbnkiwkbyjenvvqclz
 supabase db push
 ```
+
+## Deployment
+
+Hosted on Vercel (`iamkrish-upretys-projects/project-m`), connected to this GitHub repo — every
+push to `main` auto-deploys. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are
+set in the Vercel project's environment variables (Production + Preview).
+
+Supabase Auth's site URL and redirect allow-list include both the production domain and
+`http://localhost:3010/**`, so magic-link sign-in works in local dev and in production. Preview
+deployments (per-branch/PR URLs) aren't in the allow-list yet — add them there if preview auth
+is needed.

@@ -19,7 +19,7 @@ export default function Onboarding() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !session) router.replace("/login");
+    if (!loading && !session) router.replace("/login?next=%2Fonboarding");
   }, [loading, session, router]);
 
   async function handleSubmit(e: React.FormEvent) {

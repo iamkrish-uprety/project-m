@@ -15,9 +15,9 @@ export const traditions: TraditionTemplate[] = [
     available: true,
     verified: false,
     contentNote:
-      "Reflects a common North Indian/Nepali shape. Regional traditions (South Indian, Bengali, etc.) vary significantly.",
+      "The base list below uses Nepali names (Teej, Sagun, Swayambar) because that's where this draft started. Hindu weddings are not one country's — pick the variant that matches yours, and rename anything that doesn't fit.",
     blurb:
-      "Hindu weddings usually run as a series of ceremonies over several days rather than a single event, with the rituals, attire, and shopping list differing for each one.",
+      "Hindu weddings usually run as a series of ceremonies over several days rather than a single event, with the rituals, attire, and shopping list differing for each one. They're practised across Nepal, India, and diaspora communities worldwide, and the shape changes a lot between them.",
     events: ["Teej", "Sagun", "Mehendi", "Swayambar / Milap", "Reception"],
     checklist: [
       { id: "h1", event: "Teej", task: "Arrange fasting/puja essentials for the bride's family" },
@@ -36,8 +36,26 @@ export const traditions: TraditionTemplate[] = [
     ],
     variants: [
       {
+        id: "nepali",
+        name: "Nepali",
+        where: "Nepal",
+        note: "Adds ceremonies common in Nepali Hindu weddings. The base list already leans Nepali.",
+        addEvents: ["Supari / Chhekne", "Janti"],
+        addChecklist: [
+          { id: "h-np1", event: "Supari / Chhekne", task: "Hold the formal proposal and fix the date with a priest" },
+          { id: "h-np2", event: "Janti", task: "Arrange the janti (groom's procession) and panche baja musicians" },
+          { id: "h-np3", event: "Swayambar / Milap", task: "Arrange the kanyadaan and sindoor ceremony essentials" },
+        ],
+        addShopping: [
+          { id: "h-nps1", event: "Swayambar / Milap", item: "Red saree and potey (glass bead necklace)" },
+          { id: "h-nps2", event: "Swayambar / Milap", item: "Tilhari and sindoor" },
+          { id: "h-nps3", event: "Janti", item: "Groom's daura-suruwal and dhaka topi" },
+        ],
+      },
+      {
         id: "north-indian",
         name: "North Indian",
+        where: "Northern India",
         note: "Adds the Sangeet and Baraat, which are central in many North Indian weddings.",
         addEvents: ["Sangeet", "Baraat"],
         addChecklist: [
@@ -53,7 +71,8 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "south-indian",
         name: "South Indian",
-        note: "South Indian ceremonies differ substantially from the North Indian base above — this variant is especially rough and needs review.",
+        where: "Southern India (Tamil, Telugu, Kannada, Malayali)",
+        note: "South Indian ceremonies differ substantially from the base list above — this variant is especially rough and needs review.",
         addEvents: ["Nischayathartham", "Muhurtham"],
         addChecklist: [
           { id: "h-si1", event: "Nischayathartham", task: "Hold formal engagement and fix the muhurtham (auspicious time)" },
@@ -69,6 +88,7 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "bengali",
         name: "Bengali",
+        where: "West Bengal and Bangladesh",
         note: "Adds a few widely-recognised Bengali ceremonies; far from complete.",
         addEvents: ["Aiburobhat", "Gaye Holud", "Bou Bhaat"],
         addChecklist: [
@@ -80,6 +100,21 @@ export const traditions: TraditionTemplate[] = [
           { id: "h-bs1", event: "Gaye Holud", item: "Yellow/holud saree" },
           { id: "h-bs2", event: "Swayambar / Milap", item: "Benarasi saree and mukut (headpiece)" },
           { id: "h-bs3", event: "Swayambar / Milap", item: "Topor (groom's headwear)" },
+        ],
+      },
+      {
+        id: "diaspora",
+        name: "Outside Nepal / India",
+        where: "UK, US, Australia, Gulf, and elsewhere",
+        note: "For weddings held away from where the family is from — adds the logistics that come with that.",
+        addChecklist: [
+          { id: "h-d1", event: "Swayambar / Milap", task: "Find a priest who performs the rites in your language" },
+          { id: "h-d2", event: "Swayambar / Milap", task: "Check the venue allows an open flame for the havan" },
+          { id: "h-d3", event: "Reception", task: "Sort travel and accommodation for family flying in" },
+          { id: "h-d4", event: "Reception", task: "Complete local civil/legal registration separately" },
+        ],
+        addShopping: [
+          { id: "h-ds1", event: "Swayambar / Milap", item: "Puja samagri — order early if shipping from abroad" },
         ],
       },
     ],
@@ -110,6 +145,7 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "catholic",
         name: "Catholic",
+        where: "Worldwide — local diocese rules vary",
         note: "Catholic weddings usually involve parish paperwork and preparation well ahead of the date.",
         addChecklist: [
           { id: "c-cat1", event: "Engagement", task: "Meet the parish priest and begin marriage preparation (Pre-Cana)" },
@@ -120,6 +156,7 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "protestant",
         name: "Protestant",
+        where: "Worldwide — varies by denomination",
         note: "Practice varies widely between denominations and individual churches.",
         addChecklist: [
           { id: "c-pro1", event: "Engagement", task: "Confirm the church's requirements and any premarital counselling" },
@@ -129,6 +166,7 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "orthodox",
         name: "Orthodox",
+        where: "Greece, Eastern Europe, Middle East, and diaspora",
         note: "Adds the crowning ceremony; details differ across Greek, Russian, and other Orthodox churches.",
         addEvents: ["Betrothal"],
         addChecklist: [
@@ -167,7 +205,8 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "south-asian",
         name: "South Asian",
-        note: "Adds events common in Pakistani, Indian, and Bangladeshi Muslim weddings.",
+        where: "Pakistan, India, Bangladesh, Nepal, and diaspora",
+        note: "Adds events common in South Asian Muslim weddings.",
         addEvents: ["Baraat"],
         addChecklist: [
           { id: "m-sa1", event: "Mehndi", task: "Plan dholki nights and mehndi performances" },
@@ -181,6 +220,7 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "arab",
         name: "Arab",
+        where: "Levant, Gulf, North Africa",
         note: "Adds the Katb al-Kitab and Zaffa; customs differ widely across Arab countries.",
         addEvents: ["Katb al-Kitab", "Zaffa"],
         addChecklist: [
@@ -218,6 +258,7 @@ export const traditions: TraditionTemplate[] = [
       {
         id: "punjabi",
         name: "Punjabi",
+        where: "Punjab (India and Pakistan)",
         note: "Adds pre-wedding ceremonies common in Punjabi Sikh families.",
         addEvents: ["Maiyan / Vatna", "Milni"],
         addChecklist: [
@@ -226,6 +267,17 @@ export const traditions: TraditionTemplate[] = [
           { id: "sk-p3", event: "Anand Karaj", task: "Arrange the palki/doli send-off" },
         ],
         addShopping: [{ id: "sk-ps1", event: "Maiyan / Vatna", item: "Vatna/haldi ceremony outfit" }],
+      },
+      {
+        id: "sikh-diaspora",
+        name: "Outside South Asia",
+        where: "UK, Canada, US, and elsewhere",
+        note: "For an Anand Karaj held at a Gurdwara abroad.",
+        addChecklist: [
+          { id: "sk-d1", event: "Anand Karaj", task: "Book the Gurdwara and confirm its rules on timings and photography" },
+          { id: "sk-d2", event: "Anand Karaj", task: "Check whether the Gurdwara requires its own Langar arrangements" },
+          { id: "sk-d3", event: "Reception", task: "Complete local civil/legal registration separately" },
+        ],
       },
     ],
   },
@@ -249,6 +301,39 @@ export const traditions: TraditionTemplate[] = [
       { id: "bs1", event: "Blessing Ceremony", item: "Traditional outfit (varies by country/culture)" },
       { id: "bs2", event: "Blessing Ceremony", item: "Offerings for monks/temple" },
       { id: "bs3", event: "Reception", item: "Reception outfit" },
+    ],
+    variants: [
+      {
+        id: "himalayan",
+        name: "Nepali / Tibetan",
+        where: "Nepal, Tibet, Bhutan, Ladakh",
+        note: "Vajrayana practice — a lama's blessing and an astrologically chosen date are common. Rough draft.",
+        addChecklist: [
+          { id: "b-h1", event: "Blessing Ceremony", task: "Ask a lama to choose an auspicious date" },
+          { id: "b-h2", event: "Blessing Ceremony", task: "Arrange khata (ceremonial scarves) for guests" },
+        ],
+        addShopping: [{ id: "b-hs1", event: "Blessing Ceremony", item: "Khata scarves and butter lamps" }],
+      },
+      {
+        id: "theravada",
+        name: "Thai / Sri Lankan",
+        where: "Thailand, Sri Lanka, Myanmar, Cambodia, Laos",
+        note: "Theravada practice — often a morning merit-making with monks, then a separate secular ceremony. Rough draft.",
+        addEvents: ["Merit-making"],
+        addChecklist: [
+          { id: "b-t1", event: "Merit-making", task: "Arrange the morning alms offering to monks" },
+          { id: "b-t2", event: "Blessing Ceremony", task: "Arrange the water-pouring (rod nam sang) or poruwa setup" },
+        ],
+      },
+      {
+        id: "east-asian",
+        name: "Japanese / Chinese",
+        where: "Japan, China, Taiwan, Korea",
+        note: "Mahayana practice, where Buddhist elements often sit alongside local or secular ceremonies. Rough draft.",
+        addChecklist: [
+          { id: "b-e1", event: "Blessing Ceremony", task: "Confirm the temple and which elements will be Buddhist vs. secular" },
+        ],
+      },
     ],
   },
   {

@@ -8,11 +8,14 @@ import { useSession } from "@/lib/auth";
 import { findTradition } from "@/data/traditions";
 import { resolveTemplate } from "@/lib/types";
 import { relativeDay } from "@/lib/dates";
-import { BudgetRow, ChecklistRow, GuestRow, ShoppingRow, WeddingRow } from "@/lib/db";
+import { BudgetRow, ChecklistRow, GuestRow, ShoppingRow, SupplierRow, WeddingRow } from "@/lib/db";
+import { findCountry } from "@/data/regions";
 import ChecklistSection from "@/components/ChecklistSection";
 import ShoppingSection from "@/components/ShoppingSection";
+import SupplierSection from "@/components/SupplierSection";
 import BudgetSection from "@/components/BudgetSection";
 import GuestSection from "@/components/GuestSection";
+import InvitationSection from "@/components/InvitationSection";
 import ShareSection from "@/components/ShareSection";
 import { buttonGhost, card, muted } from "@/components/ui";
 
@@ -26,6 +29,7 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
   const [shopping, setShopping] = useState<ShoppingRow[]>([]);
   const [budget, setBudget] = useState<BudgetRow[]>([]);
   const [guests, setGuests] = useState<GuestRow[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRow[]>([]);
   const [fetching, setFetching] = useState(true);
   // Captured with the data rather than read during render, which would be impure.
   const [now, setNow] = useState<number | null>(null);
@@ -48,17 +52,19 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
       setWedding(weddingRow ?? null);
 
       if (weddingRow) {
-        const [c, s, b, g] = await Promise.all([
+        const [c, s, b, g, sup] = await Promise.all([
           supabase.from("checklist_items").select("*").eq("wedding_id", id).order("sort_order"),
           supabase.from("shopping_items").select("*").eq("wedding_id", id).order("sort_order"),
           supabase.from("budget_categories").select("*").eq("wedding_id", id).order("category"),
           supabase.from("guests").select("*").eq("wedding_id", id).order("name"),
+          supabase.from("plan_suppliers").select("*").eq("wedding_id", id).order("created_at"),
         ]);
         if (cancelled) return;
         setChecklist(c.data ?? []);
         setShopping(s.data ?? []);
         setBudget(b.data ?? []);
         setGuests(g.data ?? []);
+        setSuppliers(sup.data ?? []);
       }
       setNow(Date.now());
       setFetching(false);
@@ -87,6 +93,8 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
   const events = resolved?.events ?? [];
 
   const away = relativeDay(wedding.wedding_date, now);
+  const country = findCountry(wedding.country);
+  const place = wedding.region;
 
   return (
     <main className="min-h-screen px-6 py-12 max-w-3xl mx-auto flex flex-col gap-10">
@@ -106,8 +114,12 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
               {away && ` · ${away}`}
               {" · "}
               {wedding.region || "Region TBD"}
+              {country.id !== "other" && `, ${country.name}`}
               {" · "}
-              Budget {wedding.budget_total ? Number(wedding.budget_total).toLocaleString() : "TBD"}
+              Budget{" "}
+              {wedding.budget_total
+                ? `${Number(wedding.budget_total).toLocaleString()}${country.currency ? ` ${country.currency}` : ""}`
+                : "TBD"}
             </p>
           </div>
           <Link href={`/plan/${id}/settings`} className={buttonGhost}>
@@ -125,7 +137,21 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
       )}
 
       <ChecklistSection weddingId={id} events={events} rows={checklist} onChange={setChecklist} />
-      <ShoppingSection weddingId={id} events={events} rows={shopping} onChange={setShopping} />
+      <ShoppingSection
+        weddingId={id}
+        events={events}
+        country={country}
+        place={place}
+        rows={shopping}
+        onChange={setShopping}
+      />
+      <SupplierSection
+        weddingId={id}
+        country={country}
+        place={place}
+        rows={suppliers}
+        onChange={setSuppliers}
+      />
       <BudgetSection
         weddingId={id}
         budgetTotal={Number(wedding.budget_total)}
@@ -133,6 +159,16 @@ export default function PlanPage({ params }: { params: Promise<{ id: string }> }
         onChange={setBudget}
       />
       <GuestSection weddingId={id} rows={guests} onChange={setGuests} />
+      <InvitationSection
+        weddingId={id}
+        coupleNames={wedding.couple_names}
+        weddingDate={wedding.wedding_date}
+        place={place}
+        message={wedding.invitation_message}
+        guests={guests}
+        onMessageChange={(m) => setWedding({ ...wedding, invitation_message: m })}
+        onGuestsChange={setGuests}
+      />
       <ShareSection weddingId={id} ownerId={wedding.owner_id} currentUserId={session.user.id} />
     </main>
   );

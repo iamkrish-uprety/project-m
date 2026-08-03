@@ -74,10 +74,24 @@ wedding.
   flag and an optional `contentNote` explaining what's uncertain; the plan and the public
   guides both show a draft banner for any unverified tradition. Treat this as a starting
   point, not a source of truth, until real review happens.
-- ✅ Sub-tradition variants — Hindu (North Indian, South Indian, Bengali), Christian
-  (Catholic, Protestant, Orthodox), Muslim (South Asian, Arab), Sikh (Punjabi). Variants
-  only *add* to the base template, so picking one never hides anything. Same caveat: all
-  unreviewed.
+- ✅ Sub-tradition variants, and they are **not India-only**. Hindu (Nepali, North Indian,
+  South Indian, Bengali, diaspora), Christian (Catholic, Protestant, Orthodox), Muslim
+  (South Asian, Arab), Sikh (Punjabi, outside South Asia), Buddhist (Nepali/Tibetan,
+  Thai/Sri Lankan, Japanese/Chinese). Each carries a `where` field naming the countries it
+  applies to, shown in every picker. Variants only *add* to the base template, so picking
+  one never hides anything. Same caveat: all unreviewed.
+- ✅ Where to find things. Every shopping item has a "where to find it" search — Google
+  Maps for local shops plus the online marketplaces that actually operate in the couple's
+  country (Daraz in Nepal, regional Amazon elsewhere, Etsy everywhere) — and the couple can
+  save the shop they picked against the item.
+- ✅ Suppliers section for the things you book rather than buy: venue, catering,
+  photography, and so on, each with a status (still looking / shortlisted / booked / ours
+  already), a quote, and contact details. "Ours already" matters — plenty of couples come
+  in with a photographer in the family.
+- ✅ Invitations. WhatsApp and email invites work now via `wa.me` and `mailto:` deep links,
+  which need no API and no account: the app opens the message pre-filled and the couple
+  hits send themselves. Printed cards are marked coming soon — that genuinely needs a
+  print-and-mail partner.
 - ✅ Public SEO guide pages at `/guides` and `/guides/<tradition>`, statically generated
   with per-tradition metadata. They carry the draft disclaimer prominently — unverified
   cultural content shouldn't read as authoritative just because it ranks.
@@ -98,6 +112,10 @@ wedding.
   has actually verified; generating plausible-looking vendor names, phone numbers, and
   websites would put fake businesses in front of couples spending real money. Seed it by
   hand from sources you trust.
+- **No "best vendor" rankings anywhere.** The major wedding directories — WedMeGood,
+  Hitched, Bridebook, The Knot — all charge vendors for visibility, so their ordering is
+  advertising rather than merit. `src/data/regions.ts` links them as search tools and says
+  so plainly on the page, instead of repackaging paid placement as a recommendation.
 - Publishing/moderation UI — not yet done; flip `published` in the Supabase dashboard for
   now.
 - Reviews — table and RLS exist (`vendor_reviews`), no UI yet.
@@ -120,10 +138,11 @@ table for now, since they're static seed content, not per-user data.
 
 | Table | Purpose |
 |---|---|
-| `weddings` | One per couple: owner, tradition + variant, date, region, budget total |
+| `weddings` | One per couple: owner, tradition + variant, date, city + country, budget, invitation message |
+| `plan_suppliers` | Services booked rather than bought, with status and quote |
 | `wedding_collaborators` | Extra users (partner, family coordinator) with access to a wedding |
 | `checklist_items` | Per-wedding items with due date and notes, cloned from a template then freely editable |
-| `shopping_items` | Per-wedding shopping list with cost estimates, same clone-and-edit pattern |
+| `shopping_items` | Per-wedding shopping list with cost estimates and a saved shop, same clone-and-edit pattern |
 | `budget_categories` | Allocated vs. spent, per wedding |
 | `guests` | Guest list: contact, side, invited, RSVP, plus-ones |
 | `profiles` | Mirrors `auth.users.email` so a plan can show who has access (auth.users isn't client-readable) |

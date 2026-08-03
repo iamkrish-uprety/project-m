@@ -92,6 +92,9 @@ export default async function GuidePage({ params }: { params: Promise<{ traditio
             {t.variants.map((v) => (
               <div key={v.id} className="bg-surface border border-line rounded-xl px-5 py-4">
                 <h3 className="font-semibold">{v.name}</h3>
+                {v.where && (
+                  <p className="text-xs uppercase tracking-wide text-secondary font-semibold mt-0.5">{v.where}</p>
+                )}
                 {v.note && <p className="text-sm text-foreground/60 mt-1">{v.note}</p>}
                 {(v.addChecklist?.length || v.addShopping?.length) && (
                   <ul className="list-disc pl-5 text-sm text-foreground/70 flex flex-col gap-1 mt-3">

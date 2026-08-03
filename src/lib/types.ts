@@ -20,6 +20,8 @@ export interface ShoppingItem {
 export interface TraditionVariant {
   id: string;
   name: string;
+  /** Where this version is usually practised — these aren't all one country. */
+  where?: string;
   note?: string;
   addEvents?: string[];
   addChecklist?: ChecklistItem[];

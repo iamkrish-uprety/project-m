@@ -8,7 +8,9 @@ export interface WeddingRow {
   tradition_variant: string | null;
   wedding_date: string | null;
   region: string;
+  country: string;
   budget_total: number;
+  invitation_message: string | null;
   created_at: string;
 }
 
@@ -31,7 +33,23 @@ export interface ShoppingRow {
   bought: boolean;
   estimated_cost: number;
   notes: string | null;
+  /** A shop the couple found and wants to remember for this item. */
+  source_name: string | null;
+  source_url: string | null;
   sort_order: number;
+}
+
+export interface SupplierRow {
+  id: string;
+  wedding_id: string;
+  category: string;
+  name: string;
+  url: string | null;
+  contact: string | null;
+  notes: string | null;
+  quoted_cost: number;
+  status: "looking" | "shortlisted" | "booked" | "own";
+  created_at: string;
 }
 
 export interface BudgetRow {

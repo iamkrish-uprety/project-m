@@ -6,6 +6,7 @@ import { use, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/auth";
 import { findTradition } from "@/data/traditions";
+import { COUNTRIES } from "@/data/regions";
 import { WeddingRow } from "@/lib/db";
 import { buttonPrimary, buttonGhost, field, muted } from "@/components/ui";
 
@@ -24,6 +25,7 @@ export default function PlanSettings({ params }: { params: Promise<{ id: string 
   const [coupleNames, setCoupleNames] = useState("");
   const [weddingDate, setWeddingDate] = useState("");
   const [region, setRegion] = useState("");
+  const [country, setCountry] = useState("other");
   const [budgetTotal, setBudgetTotal] = useState("");
   const [variant, setVariant] = useState("");
 
@@ -42,6 +44,7 @@ export default function PlanSettings({ params }: { params: Promise<{ id: string 
         setCoupleNames(data.couple_names);
         setWeddingDate(data.wedding_date ?? "");
         setRegion(data.region);
+        setCountry(data.country ?? "other");
         setBudgetTotal(String(data.budget_total ?? ""));
         setVariant(data.tradition_variant ?? "");
       }
@@ -62,6 +65,7 @@ export default function PlanSettings({ params }: { params: Promise<{ id: string 
         couple_names: coupleNames,
         wedding_date: weddingDate || null,
         region,
+        country,
         budget_total: Number(budgetTotal) || 0,
         tradition_variant: variant || null,
       })
@@ -132,6 +136,7 @@ export default function PlanSettings({ params }: { params: Promise<{ id: string 
               {template.variants.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name}
+                  {v.where ? ` — ${v.where}` : ""}
                 </option>
               ))}
             </select>
@@ -147,10 +152,22 @@ export default function PlanSettings({ params }: { params: Promise<{ id: string 
           <input type="date" value={weddingDate} onChange={(e) => setWeddingDate(e.target.value)} className={field} />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Region / city
-          <input value={region} onChange={(e) => setRegion(e.target.value)} className={field} />
-        </label>
+        <div className="flex gap-2 flex-wrap">
+          <label className="flex flex-col gap-1 text-sm flex-1 min-w-[8rem]">
+            City
+            <input value={region} onChange={(e) => setRegion(e.target.value)} className={field} />
+          </label>
+          <label className="flex flex-col gap-1 text-sm flex-1 min-w-[8rem]">
+            Country
+            <select value={country} onChange={(e) => setCountry(e.target.value)} className={field}>
+              {COUNTRIES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <label className="flex flex-col gap-1 text-sm">
           Total budget

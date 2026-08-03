@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { traditions } from "@/data/traditions";
+import { COUNTRIES, CountryId } from "@/data/regions";
 import { TraditionId, resolveTemplate } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/auth";
@@ -17,6 +18,7 @@ export default function Onboarding() {
   const [variant, setVariant] = useState("");
   const [weddingDate, setWeddingDate] = useState("");
   const [region, setRegion] = useState("");
+  const [country, setCountry] = useState<CountryId>("np");
   const [budgetTotal, setBudgetTotal] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,7 @@ export default function Onboarding() {
         tradition_variant: variant || null,
         wedding_date: weddingDate || null,
         region,
+        country,
         budget_total: Number(budgetTotal) || 0,
       })
       .select()
@@ -136,6 +139,7 @@ export default function Onboarding() {
               {template.variants.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name}
+                  {v.where ? ` — ${v.where}` : ""}
                 </option>
               ))}
             </select>
@@ -158,15 +162,30 @@ export default function Onboarding() {
           />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Region / city
-          <input
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            className={field}
-            placeholder="e.g. Kathmandu"
-          />
-        </label>
+        <div className="flex gap-2 flex-wrap">
+          <label className="flex flex-col gap-1 text-sm flex-1 min-w-[9rem]">
+            City
+            <input
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className={field}
+              placeholder="e.g. Kathmandu"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-sm flex-1 min-w-[9rem]">
+            Country
+            <select value={country} onChange={(e) => setCountry(e.target.value as CountryId)} className={field}>
+              {COUNTRIES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="text-xs text-foreground/50 -mt-3">
+          We use these to search for shops and suppliers near you — nothing is shared with anyone.
+        </p>
 
         <label className="flex flex-col gap-1 text-sm">
           Rough budget

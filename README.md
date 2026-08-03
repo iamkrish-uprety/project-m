@@ -75,7 +75,10 @@ lists all traditions, with the rest marked "coming soon."
 - Sub-tradition variants (North vs. South Indian Hindu, Catholic vs. Protestant Christian,
   interfaith blends) — not yet done.
 - Richer checklist items: reference photos, short explainer guides — not yet done.
-- Reminders/notifications as key dates approach — not yet done.
+- **Reminders/notifications as key dates approach — blocked on a Resend account.** Needs
+  someone to sign up at resend.com and provide an API key before this can be built (email
+  sending needs a real account; not something that can be set up on someone else's behalf).
+  Deferred until that's ready.
 - Public SEO guide pages per tradition double as organic acquisition — not yet done.
 
 ### Phase 3 — Vendor directory & marketplace

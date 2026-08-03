@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/auth";
+import { traditions } from "@/data/traditions";
 
 interface ChecklistRow {
   id: string;
@@ -199,6 +200,7 @@ function DashboardContent() {
   const totalAllocated = budget.reduce((sum, b) => sum + b.allocated, 0);
   const totalSpent = budget.reduce((sum, b) => sum + b.spent, 0);
   const invitedCount = guests.filter((g) => g.invited).length;
+  const template = traditions.find((t) => t.id === wedding.tradition);
 
   return (
     <main className="min-h-screen px-6 py-16 max-w-3xl mx-auto flex flex-col gap-10">
@@ -217,6 +219,14 @@ function DashboardContent() {
           Sign out
         </button>
       </header>
+
+      {template && !template.verified && (
+        <p className="text-sm text-foreground/60 bg-surface border border-line rounded-xl px-4 py-3 -mt-4">
+          The checklist and shopping list below are a draft, not yet confirmed by anyone from this
+          tradition.
+          {template.contentNote && <span className="block mt-1">{template.contentNote}</span>}
+        </p>
+      )}
 
       <section>
         <h2 className="text-xl font-semibold mb-1">Checklist</h2>

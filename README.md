@@ -64,13 +64,19 @@ wedding.
 across every tradition (see [Risks](#risks--open-questions)). The onboarding UI still
 lists all traditions, with the rest marked "coming soon."
 
-### Phase 2 — Content depth & more traditions
+### Phase 2 — Content depth & more traditions 🚧 in progress
 
+- ✅ Muslim (Nikah/Walima), Sikh (Anand Karaj), and Buddhist tradition templates added.
+  **None of the tradition content — including Hindu and Christian — has been reviewed by
+  someone from that tradition yet.** Every `TraditionTemplate` carries a `verified: false`
+  flag and an optional `contentNote` explaining what's uncertain; the dashboard shows a
+  draft banner for any unverified tradition. Treat this as a starting point, not a source
+  of truth, until real review happens.
 - Sub-tradition variants (North vs. South Indian Hindu, Catholic vs. Protestant Christian,
-  Nikah, Sikh Anand Karaj, Buddhist, interfaith blends).
-- Richer checklist items: reference photos, short explainer guides.
-- Reminders/notifications as key dates approach.
-- Public SEO guide pages per tradition double as organic acquisition.
+  interfaith blends) — not yet done.
+- Richer checklist items: reference photos, short explainer guides — not yet done.
+- Reminders/notifications as key dates approach — not yet done.
+- Public SEO guide pages per tradition double as organic acquisition — not yet done.
 
 ### Phase 3 — Vendor directory & marketplace
 

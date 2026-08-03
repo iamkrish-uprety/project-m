@@ -45,7 +45,7 @@ function JoinContent() {
         return;
       }
 
-      router.replace(`/dashboard?wedding=${weddingId}`);
+      router.replace(`/plan/${weddingId}`);
     })();
   }, [loading, session, weddingId, router, status]);
 

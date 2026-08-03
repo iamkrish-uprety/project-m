@@ -51,43 +51,57 @@ directory that matches the actual ceremonies, attire, and rituals of that weddin
 No vendors yet — pure utility, good enough that someone would use it for their own
 wedding.
 
-- Onboarding: pick tradition(s), wedding date, region, rough budget.
-- Checklist & timeline generated from the tradition template, fully editable.
-- Shopping list per ceremony, seeded from the template, editable per couple.
-- Budget tracker: per-category allocated vs. spent, rolling up against the wedding's
-  total budget, with an over-budget indicator per category.
-- Guest list: add/remove guests with a side (Bride/Groom/Both), toggle invited.
+- Onboarding: pick a tradition and regional variant, wedding date, region, rough budget.
+- Checklist grouped by ceremony, seeded from the template and fully editable — add, rename
+  (click a task), delete, and set a due date per item.
+- Shopping list per ceremony, same edit model, with a cost estimate per item.
+- Budget tracker: per-category allocated vs. spent with a progress bar, rolling up against
+  the wedding's total budget and showing what's left to allocate.
+- Guest list: contact details, side (Bride/Groom/Both), invited flag, RSVP
+  (pending/coming/can't come) with filters, and plus-ones feeding a live headcount.
+- Multiple plans per account, listed at `/dashboard` — a family coordinator can be on
+  several at once.
+- Plan settings (`/plan/<id>/settings`) to edit details or delete the plan.
 - Share/co-edit: a copyable invite link (`/join?wedding=<id>`) lets a partner or family
-  coordinator self-add as a collaborator once signed in.
-
-**Content scope for v1**: going deep on **Hindu + Christian** first rather than shallow
-across every tradition (see [Risks](#risks--open-questions)). The onboarding UI still
-lists all traditions, with the rest marked "coming soon."
+  coordinator self-add as a collaborator; the plan shows everyone who has access, and the
+  owner can remove them.
 
 ### Phase 2 — Content depth & more traditions 🚧 in progress
 
 - ✅ Muslim (Nikah/Walima), Sikh (Anand Karaj), and Buddhist tradition templates added.
   **None of the tradition content — including Hindu and Christian — has been reviewed by
   someone from that tradition yet.** Every `TraditionTemplate` carries a `verified: false`
-  flag and an optional `contentNote` explaining what's uncertain; the dashboard shows a
-  draft banner for any unverified tradition. Treat this as a starting point, not a source
-  of truth, until real review happens.
-- Sub-tradition variants (North vs. South Indian Hindu, Catholic vs. Protestant Christian,
-  interfaith blends) — not yet done.
-- Richer checklist items: reference photos, short explainer guides — not yet done.
+  flag and an optional `contentNote` explaining what's uncertain; the plan and the public
+  guides both show a draft banner for any unverified tradition. Treat this as a starting
+  point, not a source of truth, until real review happens.
+- ✅ Sub-tradition variants — Hindu (North Indian, South Indian, Bengali), Christian
+  (Catholic, Protestant, Orthodox), Muslim (South Asian, Arab), Sikh (Punjabi). Variants
+  only *add* to the base template, so picking one never hides anything. Same caveat: all
+  unreviewed.
+- ✅ Public SEO guide pages at `/guides` and `/guides/<tradition>`, statically generated
+  with per-tradition metadata. They carry the draft disclaimer prominently — unverified
+  cultural content shouldn't read as authoritative just because it ranks.
+- Richer checklist items: reference photos, explainer copy — not yet done.
 - **Reminders/notifications as key dates approach — blocked on a Resend account.** Needs
   someone to sign up at resend.com and provide an API key before this can be built (email
   sending needs a real account; not something that can be set up on someone else's behalf).
   Deferred until that's ready.
-- Public SEO guide pages per tradition double as organic acquisition — not yet done.
+- Interfaith/civil weddings still unavailable — merging two traditions' checklists is a
+  design question, not just missing content.
 
-### Phase 3 — Vendor directory & marketplace
+### Phase 3 — Vendor directory & marketplace 🚧 in progress
 
-- Vendor directory (clothing, jewellery, decor, catering, photography, officiants),
-  filterable by tradition and city.
-- Seed with a curated, hand-populated list first to avoid the empty-directory cold start.
+- ✅ Directory at `/vendors`, filterable by category, tradition, and region.
+- ✅ User submission flow. Listings insert with `published = false` and are invisible to
+  everyone but their submitter until reviewed — enforced in RLS, not just the UI.
+- **The directory ships empty on purpose.** Every listing has to be a real business someone
+  has actually verified; generating plausible-looking vendor names, phone numbers, and
+  websites would put fake businesses in front of couples spending real money. Seed it by
+  hand from sources you trust.
+- Publishing/moderation UI — not yet done; flip `published` in the Supabase dashboard for
+  now.
+- Reviews — table and RLS exist (`vendor_reviews`), no UI yet.
 - Vendor self-onboarding portal once there's directory traffic worth claiming.
-- Inquiry/contact forms, basic reviews, admin moderation.
 
 ### Phase 4 — Monetization & growth
 
@@ -106,17 +120,28 @@ table for now, since they're static seed content, not per-user data.
 
 | Table | Purpose |
 |---|---|
-| `weddings` | One per couple: owner, tradition, date, region, budget total |
+| `weddings` | One per couple: owner, tradition + variant, date, region, budget total |
 | `wedding_collaborators` | Extra users (partner, family coordinator) with access to a wedding |
-| `checklist_items` | Per-wedding items, cloned from a tradition template and freely editable |
-| `shopping_items` | Per-wedding shopping list, same clone-and-edit pattern |
+| `checklist_items` | Per-wedding items with due date and notes, cloned from a template then freely editable |
+| `shopping_items` | Per-wedding shopping list with cost estimates, same clone-and-edit pattern |
 | `budget_categories` | Allocated vs. spent, per wedding |
-| `guests` | Guest list per wedding |
-| `vendors` | *Phase 3+, not yet created.* Name, categories, traditions served, region, contact |
-| `vendor_reviews` | *Phase 3+, not yet created.* Rating and text, tied to a wedding |
+| `guests` | Guest list: contact, side, invited, RSVP, plus-ones |
+| `profiles` | Mirrors `auth.users.email` so a plan can show who has access (auth.users isn't client-readable) |
+| `vendors` | Directory listings; `published` gates public visibility |
+| `vendor_reviews` | Rating and text, one per user per vendor |
 
 Row-level security on every table scopes reads/writes to the wedding's `owner_id` or
-anyone listed in `wedding_collaborators` — see `has_wedding_access()` in the migration.
+anyone listed in `wedding_collaborators` — see `has_wedding_access()` in the migrations.
+
+Two RLS details worth knowing before editing policies:
+
+- **`weddings` policies must not query `weddings`.** A self-referential lookup inside a
+  `SECURITY DEFINER` helper breaks `INSERT ... RETURNING`, because the new row isn't
+  visible to the nested query during the returning check — it surfaces as a confusing
+  "new row violates row-level security policy". Compare `owner_id` directly instead; see
+  `20260803010000_fix_weddings_rls.sql`.
+- **Child tables are fine using `has_wedding_access()`**, since they look up a `weddings`
+  row that already exists.
 
 ## Tech stack
 

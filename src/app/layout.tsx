@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SessionProvider } from "@/lib/auth";
+import Nav from "@/components/Nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Project M — Wedding Planner",
-  description: "Wedding planning for every tradition — Hindu, Christian, and more.",
+  description:
+    "Wedding planning built around your tradition — Hindu, Christian, Muslim, Sikh, and Buddhist checklists, shopping lists, budgets, and guest lists.",
 };
 
 export default function RootLayout({
@@ -29,7 +31,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <Nav />
+          <div className="flex-1">{children}</div>
+        </SessionProvider>
       </body>
     </html>
   );

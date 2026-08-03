@@ -1,17 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { traditions } from "@/data/traditions";
-import { TraditionId } from "@/lib/types";
+import { TraditionId, resolveTemplate } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/auth";
+import { buttonPrimary, field, muted } from "@/components/ui";
 
 export default function Onboarding() {
   const router = useRouter();
   const { session, loading } = useSession();
   const [coupleNames, setCoupleNames] = useState("");
   const [tradition, setTradition] = useState<TraditionId>("hindu");
+  const [variant, setVariant] = useState("");
   const [weddingDate, setWeddingDate] = useState("");
   const [region, setRegion] = useState("");
   const [budgetTotal, setBudgetTotal] = useState("");
@@ -22,13 +25,15 @@ export default function Onboarding() {
     if (!loading && !session) router.replace("/login?next=%2Fonboarding");
   }, [loading, session, router]);
 
+  const template = traditions.find((t) => t.id === tradition)!;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!session) return;
     setSubmitting(true);
     setError(null);
 
-    const template = traditions.find((t) => t.id === tradition)!;
+    const resolved = resolveTemplate(template, variant || null);
 
     const { data: wedding, error: weddingError } = await supabase
       .from("weddings")
@@ -36,6 +41,7 @@ export default function Onboarding() {
         owner_id: session.user.id,
         couple_names: coupleNames,
         tradition,
+        tradition_variant: variant || null,
         wedding_date: weddingDate || null,
         region,
         budget_total: Number(budgetTotal) || 0,
@@ -49,22 +55,24 @@ export default function Onboarding() {
       return;
     }
 
-    const { error: checklistError } = await supabase.from("checklist_items").insert(
-      template.checklist.map((c, i) => ({
-        wedding_id: wedding.id,
-        event: c.event,
-        task: c.task,
-        sort_order: i,
-      }))
-    );
-    const { error: shoppingError } = await supabase.from("shopping_items").insert(
-      template.shopping.map((s, i) => ({
-        wedding_id: wedding.id,
-        event: s.event,
-        item: s.item,
-        sort_order: i,
-      }))
-    );
+    const [{ error: checklistError }, { error: shoppingError }] = await Promise.all([
+      supabase.from("checklist_items").insert(
+        resolved.checklist.map((c, i) => ({
+          wedding_id: wedding.id,
+          event: c.event,
+          task: c.task,
+          sort_order: i,
+        }))
+      ),
+      supabase.from("shopping_items").insert(
+        resolved.shopping.map((s, i) => ({
+          wedding_id: wedding.id,
+          event: s.event,
+          item: s.item,
+          sort_order: i,
+        }))
+      ),
+    ]);
 
     if (checklistError || shoppingError) {
       setError(checklistError?.message ?? shoppingError?.message ?? "Could not seed your checklist.");
@@ -72,7 +80,7 @@ export default function Onboarding() {
       return;
     }
 
-    router.push(`/dashboard?wedding=${wedding.id}`);
+    router.push(`/plan/${wedding.id}`);
   }
 
   if (loading || !session) return null;
@@ -83,7 +91,12 @@ export default function Onboarding() {
         onSubmit={handleSubmit}
         className="w-full max-w-md flex flex-col gap-5 bg-surface border border-line rounded-2xl p-8"
       >
-        <h1 className="text-2xl font-semibold">Tell us about your wedding</h1>
+        <div>
+          <h1 className="text-2xl font-semibold">Tell us about your wedding</h1>
+          <p className={`${muted} mt-1`}>
+            We&apos;ll build a starting checklist and shopping list you can edit however you like.
+          </p>
+        </div>
 
         <label className="flex flex-col gap-1 text-sm">
           Couple&apos;s names
@@ -91,7 +104,7 @@ export default function Onboarding() {
             required
             value={coupleNames}
             onChange={(e) => setCoupleNames(e.target.value)}
-            className="border border-line rounded-lg px-3 py-2 bg-transparent"
+            className={field}
             placeholder="e.g. Aashma & Daniel"
           />
         </label>
@@ -100,8 +113,11 @@ export default function Onboarding() {
           Tradition
           <select
             value={tradition}
-            onChange={(e) => setTradition(e.target.value as TraditionId)}
-            className="border border-line rounded-lg px-3 py-2 bg-transparent"
+            onChange={(e) => {
+              setTradition(e.target.value as TraditionId);
+              setVariant("");
+            }}
+            className={field}
           >
             {traditions.map((t) => (
               <option key={t.id} value={t.id} disabled={!t.available}>
@@ -112,6 +128,25 @@ export default function Onboarding() {
           </select>
         </label>
 
+        {template.variants && template.variants.length > 0 && (
+          <label className="flex flex-col gap-1 text-sm">
+            Regional variant <span className="text-foreground/50">(optional)</span>
+            <select value={variant} onChange={(e) => setVariant(e.target.value)} className={field}>
+              <option value="">Not sure / none</option>
+              {template.variants.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+            {variant && (
+              <span className="text-xs text-foreground/50">
+                {template.variants.find((v) => v.id === variant)?.note}
+              </span>
+            )}
+          </label>
+        )}
+
         <label className="flex flex-col gap-1 text-sm">
           Wedding date
           <input
@@ -119,7 +154,7 @@ export default function Onboarding() {
             required
             value={weddingDate}
             onChange={(e) => setWeddingDate(e.target.value)}
-            className="border border-line rounded-lg px-3 py-2 bg-transparent"
+            className={field}
           />
         </label>
 
@@ -128,7 +163,7 @@ export default function Onboarding() {
           <input
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            className="border border-line rounded-lg px-3 py-2 bg-transparent"
+            className={field}
             placeholder="e.g. Kathmandu"
           />
         </label>
@@ -140,20 +175,27 @@ export default function Onboarding() {
             min="0"
             value={budgetTotal}
             onChange={(e) => setBudgetTotal(e.target.value)}
-            className="border border-line rounded-lg px-3 py-2 bg-transparent"
+            className={field}
             placeholder="e.g. 500000"
           />
         </label>
 
+        {!template.verified && (
+          <p className="text-xs text-foreground/50">
+            Heads up: our {template.name} checklist is a draft that hasn&apos;t been reviewed by anyone from the
+            tradition yet. Everything on it is editable.
+          </p>
+        )}
+
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-2 rounded-full bg-accent text-white px-6 py-3 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className={buttonPrimary}>
           {submitting ? "Creating…" : "Create my plan"}
         </button>
+
+        <Link href="/dashboard" className="text-sm text-foreground/50 hover:text-foreground text-center">
+          Back to your plans
+        </Link>
       </form>
     </main>
   );

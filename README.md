@@ -84,19 +84,25 @@ lists all traditions, with the rest marked "coming soon."
 - Optional later: AI-assisted planning — a chat assistant that drafts a starting checklist
   from tradition + region + budget.
 
-## Data model (starting point)
+## Data model
+
+`auth.users` (Supabase-managed) is the account/profile table — no custom `users` table
+needed. Tradition templates live in code (`src/data/traditions.ts`) rather than a database
+table for now, since they're static seed content, not per-user data.
 
 | Table | Purpose |
 |---|---|
-| `users` | Account, auth, profile |
-| `weddings` | One per couple: tradition(s), date, region, budget total |
-| `tradition_templates` | Seed content per tradition/sub-tradition: default events, checklist items, shopping items |
-| `checklist_items` | Per-wedding items, cloned from a template and freely editable |
+| `weddings` | One per couple: owner, tradition, date, region, budget total |
+| `wedding_collaborators` | Extra users (partner, family coordinator) with access to a wedding |
+| `checklist_items` | Per-wedding items, cloned from a tradition template and freely editable |
 | `shopping_items` | Per-wedding shopping list, same clone-and-edit pattern |
 | `budget_categories` | Allocated vs. spent, per wedding |
 | `guests` | Guest list per wedding |
-| `vendors` | *Phase 3+.* Name, categories, traditions served, region, contact |
-| `vendor_reviews` | *Phase 3+.* Rating and text, tied to a wedding |
+| `vendors` | *Phase 3+, not yet created.* Name, categories, traditions served, region, contact |
+| `vendor_reviews` | *Phase 3+, not yet created.* Rating and text, tied to a wedding |
+
+Row-level security on every table scopes reads/writes to the wedding's `owner_id` or
+anyone listed in `wedding_collaborators` — see `has_wedding_access()` in the migration.
 
 ## Tech stack
 
@@ -107,10 +113,14 @@ Optimized for one person shipping fast:
 - **Supabase** — Postgres + Auth + Storage.
 - **Resend** — transactional email for reminders/invites (Phase 2).
 
-> Current state: the app skeleton (onboarding → dashboard, checklist, shopping list,
-> budget) runs entirely on `localStorage` with no backend wired up yet. Supabase auth/DB
-> integration is the first real task once a Supabase project exists — see `.env.example`
-> and `src/lib/supabase.ts`.
+> Current state: a live Supabase project (`project-m`, eu-central-1, under the ATTFTOrg
+> account) backs auth and data. Sign-in is passwordless (email magic link via
+> `supabase.auth.signInWithOtp`); `weddings`, `checklist_items`, `shopping_items`,
+> `budget_categories`, and `guests` are real Postgres tables with row-level security
+> scoped to the wedding's owner and collaborators (see
+> `supabase/migrations/20260803000000_init.sql`). Local dev needs Docker for the
+> `supabase` CLI's local stack — not installed here, so this project talks directly to
+> the hosted dev project via `.env.local` instead.
 
 ## Risks & open questions
 
@@ -130,8 +140,17 @@ Optimized for one person shipping fast:
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in Supabase URL/anon key once a project exists
-npm run dev
+cp .env.example .env.local   # fill in Supabase URL/anon key — see below
+npm run dev -- -p 3010
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3010](http://localhost:3010). Sign in with any email (passwordless
+magic link) to reach onboarding, or [supabase.com/dashboard](https://supabase.com/dashboard)
+→ `project-m` project to browse the database directly.
+
+Schema changes go in `supabase/migrations/`, applied with:
+
+```bash
+supabase link --project-ref kevbnkiwkbyjenvvqclz
+supabase db push
+```

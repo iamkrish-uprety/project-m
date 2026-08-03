@@ -1,35 +1,81 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { traditions } from "@/data/traditions";
-import { TraditionId, WeddingPlan } from "@/lib/types";
+import { TraditionId } from "@/lib/types";
+import { supabase } from "@/lib/supabase";
+import { useSession } from "@/lib/auth";
 
 export default function Onboarding() {
   const router = useRouter();
+  const { session, loading } = useSession();
   const [coupleNames, setCoupleNames] = useState("");
   const [tradition, setTradition] = useState<TraditionId>("hindu");
   const [weddingDate, setWeddingDate] = useState("");
   const [region, setRegion] = useState("");
   const [budgetTotal, setBudgetTotal] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    if (!loading && !session) router.replace("/login");
+  }, [loading, session, router]);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!session) return;
+    setSubmitting(true);
+    setError(null);
+
     const template = traditions.find((t) => t.id === tradition)!;
 
-    const plan: WeddingPlan = {
-      coupleNames,
-      tradition,
-      weddingDate,
-      region,
-      budgetTotal: Number(budgetTotal) || 0,
-      checklist: template.checklist.map((c) => ({ ...c, done: false })),
-      shopping: template.shopping.map((s) => ({ ...s, bought: false })),
-    };
+    const { data: wedding, error: weddingError } = await supabase
+      .from("weddings")
+      .insert({
+        owner_id: session.user.id,
+        couple_names: coupleNames,
+        tradition,
+        wedding_date: weddingDate || null,
+        region,
+        budget_total: Number(budgetTotal) || 0,
+      })
+      .select()
+      .single();
 
-    localStorage.setItem("project-m-plan", JSON.stringify(plan));
-    router.push("/dashboard");
+    if (weddingError || !wedding) {
+      setError(weddingError?.message ?? "Could not create your plan.");
+      setSubmitting(false);
+      return;
+    }
+
+    const { error: checklistError } = await supabase.from("checklist_items").insert(
+      template.checklist.map((c, i) => ({
+        wedding_id: wedding.id,
+        event: c.event,
+        task: c.task,
+        sort_order: i,
+      }))
+    );
+    const { error: shoppingError } = await supabase.from("shopping_items").insert(
+      template.shopping.map((s, i) => ({
+        wedding_id: wedding.id,
+        event: s.event,
+        item: s.item,
+        sort_order: i,
+      }))
+    );
+
+    if (checklistError || shoppingError) {
+      setError(checklistError?.message ?? shoppingError?.message ?? "Could not seed your checklist.");
+      setSubmitting(false);
+      return;
+    }
+
+    router.push(`/dashboard?wedding=${wedding.id}`);
   }
+
+  if (loading || !session) return null;
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-16">
@@ -99,11 +145,14 @@ export default function Onboarding() {
           />
         </label>
 
+        {error && <p className="text-sm text-red-500">{error}</p>}
+
         <button
           type="submit"
-          className="mt-2 rounded-full bg-accent text-white px-6 py-3 text-sm font-semibold hover:opacity-90 transition"
+          disabled={submitting}
+          className="mt-2 rounded-full bg-accent text-white px-6 py-3 text-sm font-semibold hover:opacity-90 transition disabled:opacity-50"
         >
-          Create my plan
+          {submitting ? "Creating…" : "Create my plan"}
         </button>
       </form>
     </main>

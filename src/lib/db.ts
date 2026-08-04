@@ -97,6 +97,12 @@ export interface VendorRow {
   website: string | null;
   submitted_by: string | null;
   published: boolean;
+  /** True only once someone has actually dealt with or checked this business. */
+  verified: boolean;
+  /** Where the listing came from, when it wasn't submitted by a user. */
+  source_url: string | null;
+  /** Tradition tags were guessed from public info, not declared by the business. */
+  tags_inferred: boolean;
   created_at: string;
 }
 

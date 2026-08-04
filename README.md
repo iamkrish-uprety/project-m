@@ -1,7 +1,7 @@
 # Project M — One planner, every wedding tradition
 
 **Live:** [project-m-ochre.vercel.app](https://project-m-ochre.vercel.app) — deployed on Vercel,
-auto-deploys on push to `main`.
+auto-deploys on push to `main`. Running to-do list: [TODO.md](TODO.md).
 
 A web app where a couple picks their tradition — Hindu, Christian, Muslim, Sikh, Buddhist,
 interfaith, or civil — and gets a checklist, shopping list, and (later) vendor directory
@@ -108,14 +108,25 @@ wedding.
 - ✅ Directory at `/vendors`, filterable by category, tradition, and region.
 - ✅ User submission flow. Listings insert with `published = false` and are invisible to
   everyone but their submitter until reviewed — enforced in RLS, not just the UI.
-- **The directory ships empty on purpose.** Every listing has to be a real business someone
-  has actually verified; generating plausible-looking vendor names, phone numbers, and
-  websites would put fake businesses in front of couples spending real money. Seed it by
-  hand from sources you trust.
+- ✅ Seeded with 21 real businesses (Kathmandu and London) found via public web search.
+  Each carries its `source_url` and is marked `verified = false` — the name and website are
+  accurate, but nobody has vouched for the work, and the page says so on every card. **No
+  invented phone numbers or addresses**: a wrong number attached to a real business is
+  worse than no number. `verified = true` is reserved for listings someone has actually
+  dealt with.
+- ✅ Star ratings from signed-in users (one per person per vendor), plus outbound links to
+  Google and Trustpilot reviews.
+- Listings are ordered alphabetically, never ranked. Tradition tags on seeded rows are
+  flagged `tags_inferred` and labelled as guesses, since the businesses didn't declare them.
 - **No "best vendor" rankings anywhere.** The major wedding directories — WedMeGood,
   Hitched, Bridebook, The Knot — all charge vendors for visibility, so their ordering is
   advertising rather than merit. `src/data/regions.ts` links them as search tools and says
   so plainly on the page, instead of repackaging paid placement as a recommendation.
+- **Trustpilot review content is linked, not imported.** Trustpilot prohibits scraping and
+  requires approved API access plus logo attribution to display reviews, so the app links
+  out to a Trustpilot search per vendor. Google Maps reviews are linked alongside, and are
+  usually more relevant for small local wedding businesses.
+- Moderation is still manual: flip `published` in the Supabase dashboard.
 - Publishing/moderation UI — not yet done; flip `published` in the Supabase dashboard for
   now.
 - Reviews — table and RLS exist (`vendor_reviews`), no UI yet.

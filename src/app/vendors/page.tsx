@@ -5,12 +5,20 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSession } from "@/lib/auth";
 import { traditions } from "@/data/traditions";
-import { VendorRow, VENDOR_CATEGORIES } from "@/lib/db";
+import { VendorRow, VendorReviewRow, VENDOR_CATEGORIES } from "@/lib/db";
 import { card, field, buttonPrimary, buttonGhost, muted, eyebrow } from "@/components/ui";
+import StarRating from "@/components/StarRating";
+
+interface Ratings {
+  average: number | null;
+  count: number;
+  mine: number | null;
+}
 
 export default function VendorsPage() {
   const { session } = useSession();
   const [vendors, setVendors] = useState<VendorRow[]>([]);
+  const [reviews, setReviews] = useState<VendorReviewRow[]>([]);
   const [fetching, setFetching] = useState(true);
   const [category, setCategory] = useState("");
   const [tradition, setTradition] = useState("");
@@ -21,15 +29,39 @@ export default function VendorsPage() {
     let cancelled = false;
     (async () => {
       // RLS returns published listings, plus the viewer's own pending ones.
-      const { data } = await supabase.from("vendors").select("*").order("name");
+      const [v, r] = await Promise.all([
+        supabase.from("vendors").select("*").order("name"),
+        supabase.from("vendor_reviews").select("*"),
+      ]);
       if (cancelled) return;
-      setVendors(data ?? []);
+      setVendors(v.data ?? []);
+      setReviews(r.data ?? []);
       setFetching(false);
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  function ratingsFor(vendorId: string): Ratings {
+    const forVendor = reviews.filter((r) => r.vendor_id === vendorId);
+    const count = forVendor.length;
+    const average = count === 0 ? null : forVendor.reduce((s, r) => s + r.rating, 0) / count;
+    const mine = forVendor.find((r) => r.user_id === session?.user.id)?.rating ?? null;
+    return { average, count, mine };
+  }
+
+  async function rate(vendorId: string, rating: number) {
+    if (!session) return;
+    const { data, error } = await supabase
+      .from("vendor_reviews")
+      .upsert({ vendor_id: vendorId, user_id: session.user.id, rating }, { onConflict: "vendor_id,user_id" })
+      .select()
+      .single<VendorReviewRow>();
+    if (!error && data) {
+      setReviews((prev) => [...prev.filter((r) => r.id !== data.id && !(r.vendor_id === vendorId && r.user_id === session.user.id)), data]);
+    }
+  }
 
   const filtered = vendors.filter(
     (v) =>
@@ -47,9 +79,18 @@ export default function VendorsPage() {
         <h1 className="text-3xl font-semibold mt-1">Find people who know your traditions</h1>
         <p className="text-foreground/70 mt-2 max-w-xl">
           Clothing shops, jewellers, caterers, decorators, photographers, and officiants — filtered by the
-          tradition they actually work with.
+          tradition they work with.
         </p>
       </header>
+
+      <div className={`${card} px-4 py-3`}>
+        <p className={muted}>
+          Most listings here are real businesses found through public web search and marked{" "}
+          <span className="text-foreground">unverified</span> — the name and website are accurate, but nobody has
+          vouched for their work, and the order they appear in is alphabetical, not a ranking. Check their reviews
+          and get your own quotes before paying anyone.
+        </p>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <select value={category} onChange={(e) => setCategory(e.target.value)} className={`${field} w-auto`}>
@@ -78,40 +119,106 @@ export default function VendorsPage() {
 
       {fetching ? null : published.length === 0 ? (
         <div className={`${card} px-6 py-10 text-center flex flex-col items-center gap-3`}>
-          <p className="font-semibold">No vendors listed yet</p>
-          <p className={`${muted} max-w-md`}>
-            The directory is empty on purpose — every listing here has to be a real business someone has
-            checked, not a placeholder. If you know a good one, add them below.
-          </p>
+          <p className="font-semibold">Nothing matches those filters</p>
+          <p className={`${muted} max-w-md`}>Try widening the category, tradition, or area.</p>
         </div>
       ) : (
         <ul className="flex flex-col gap-3">
-          {published.map((v) => (
-            <li key={v.id} className={`${card} px-5 py-4`}>
-              <p className={eyebrow}>{v.category}</p>
-              <p className="text-lg font-semibold mt-0.5">{v.name}</p>
-              {v.region && <p className={muted}>{v.region}</p>}
-              {v.description && <p className="text-sm text-foreground/70 mt-2">{v.description}</p>}
-              <div className="flex gap-4 mt-3 text-sm flex-wrap">
-                {v.website && (
+          {published.map((v) => {
+            const { average, count, mine: myRating } = ratingsFor(v.id);
+            const reviewQuery = v.region ? `${v.name} ${v.region.split(",")[0]}` : v.name;
+            return (
+              <li key={v.id} className={`${card} px-5 py-4`}>
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0">
+                    <p className={eyebrow}>{v.category}</p>
+                    <p className="text-lg font-semibold mt-0.5">{v.name}</p>
+                    {v.region && <p className={muted}>{v.region}</p>}
+                  </div>
+                  {v.verified ? (
+                    <span className="text-xs px-2 py-1 rounded-full border border-accent text-accent shrink-0">
+                      Checked
+                    </span>
+                  ) : (
+                    <span
+                      className="text-xs px-2 py-1 rounded-full border border-line text-foreground/50 shrink-0"
+                      title="Listed from public information. Nobody has vouched for the quality of their work."
+                    >
+                      Unverified listing
+                    </span>
+                  )}
+                </div>
+
+                {v.description && <p className="text-sm text-foreground/70 mt-2">{v.description}</p>}
+
+                <div className="mt-3">
+                  <StarRating
+                    average={average}
+                    count={count}
+                    mine={myRating}
+                    onRate={session ? (n) => rate(v.id, n) : undefined}
+                  />
+                  {!session && count === 0 && (
+                    <p className="text-xs text-foreground/40 mt-1">Sign in to rate.</p>
+                  )}
+                </div>
+
+                <div className="flex gap-4 mt-3 text-sm flex-wrap items-center">
+                  {v.website && (
+                    <a
+                      href={v.website}
+                      target="_blank"
+                      rel="noopener noreferrer nofollow"
+                      className="text-accent hover:underline"
+                    >
+                      Website ↗
+                    </a>
+                  )}
+                  {v.contact_email && (
+                    <a href={`mailto:${v.contact_email}`} className="text-accent hover:underline">
+                      Email
+                    </a>
+                  )}
+                  {v.contact_phone && <span className="text-foreground/60">{v.contact_phone}</span>}
                   <a
-                    href={v.website}
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(reviewQuery)}`}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
-                    className="text-accent hover:underline"
+                    className="text-xs text-foreground/50 hover:text-accent"
                   >
-                    Website
+                    Google reviews ↗
                   </a>
-                )}
-                {v.contact_email && (
-                  <a href={`mailto:${v.contact_email}`} className="text-accent hover:underline">
-                    Email
+                  <a
+                    href={`https://www.trustpilot.com/search?query=${encodeURIComponent(v.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="text-xs text-foreground/50 hover:text-accent"
+                  >
+                    Trustpilot ↗
                   </a>
+                </div>
+
+                {v.tags_inferred && (
+                  <p className="text-xs text-foreground/40 mt-3">
+                    Tradition tags guessed from public info, not stated by the business.
+                    {v.source_url && (
+                      <>
+                        {" "}
+                        <a
+                          href={v.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="hover:text-accent underline"
+                        >
+                          Source
+                        </a>
+                      </>
+                    )}
+                  </p>
                 )}
-                {v.contact_phone && <span className="text-foreground/60">{v.contact_phone}</span>}
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
 
